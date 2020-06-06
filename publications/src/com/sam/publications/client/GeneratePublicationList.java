@@ -63,7 +63,17 @@ public class GeneratePublicationList {
         	JSONObject item = JSONParser.parseLenient(publicationArray.get(i).toString()).isObject();
         	
         	Publication pub = new Publication();
-        	pub.year = Integer.parseInt(item.get("year").toString().replaceAll("\"", ""));
+        	
+        	String yearString = item.get("year").toString().replaceAll("\"", "");
+        	
+        	if (yearString.contentEquals("pre-print")) {
+        		pub.year=9999; //put pre-prints at the beginning
+        	} else if (yearString.contentEquals("in press")) {
+        		pub.year=9998; //put in press articles next
+        	} else {
+        		pub.year=Integer.parseInt(yearString);
+        	}
+
         	pub.citation = item.get("citation").toString().replaceAll("\"", "");
         	pub.topic = item.get("topic").toString().replaceAll("\"", "");
         	pub.method = item.get("method").toString().replaceAll("\"", "");
