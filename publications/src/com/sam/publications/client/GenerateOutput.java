@@ -105,6 +105,9 @@ public class GenerateOutput {
         	abstrButton.addClickHandler(new ClickHandler() {
         		public void onClick(ClickEvent event) {
         			if (abstrButton.getText().equals("show abstract")) {
+        				//note the requested abstract
+            			PHP.Call("pageLoad.php?id=show abstract: " + publicationOutput.get(finali).pdf, true);
+        				
         				abstr.setHTML(publicationOutput.get(finali).abstr);
         				abstrButton.setText("hide abstract");
         			} else {
