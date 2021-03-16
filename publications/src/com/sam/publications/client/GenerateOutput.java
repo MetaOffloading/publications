@@ -94,6 +94,7 @@ public class GenerateOutput {
         	//set up pdf button
         	pdfButton.addClickHandler(new ClickHandler() {
         		public void onClick(ClickEvent event) {
+        			//note the requested publication before redirecting
         			PHP.Call("pageLoad.php?id=getPub: " + publicationOutput.get(finali).pdf, true);
         			
         			Window.open("getPub.php?id="+publicationOutput.get(finali).pdf,"publication","");
