@@ -26,7 +26,7 @@ public class GeneratePublicationList {
 	public static void Run() {
 		//get all publication data
 		JSONObject json=JSONParser.parseLenient(PHP.phpOutput).isObject();
-        
+
 		//extract topics
         JSONValue topics = json.get("topics"); 
         JSONArray topicArray = topics.isArray();
@@ -40,7 +40,7 @@ public class GeneratePublicationList {
         	Publication.topicString.add(item.get("topic").toString().replaceAll("\"", ""));
         	Publication.topicPosition.add(Integer.parseInt(item.get("position").toString().replaceAll("\"", "")));
         }
-
+  
         //extract methods
         JSONValue methods = json.get("methods"); 
         JSONArray methodArray = methods.isArray();
@@ -54,26 +54,26 @@ public class GeneratePublicationList {
         	Publication.methodString.add(item.get("method").toString().replaceAll("\"", ""));
         	Publication.methodPosition.add(Integer.parseInt(item.get("position").toString().replaceAll("\"", "")));
         }
-        
+  
         //extract publications
         JSONValue publicationsjson = json.get("publications");
         JSONArray publicationArray = publicationsjson.isArray();
         
         for (int i = 0; i < publicationArray.size(); i++) {
         	JSONObject item = JSONParser.parseLenient(publicationArray.get(i).toString()).isObject();
-        	
+
         	Publication pub = new Publication();
-        	
+
         	String yearString = item.get("year").toString().replaceAll("\"", "");
-        	
-        	if (yearString.contentEquals("pre-print")) {
+
+        	if (yearString.equals("pre-print")) {
         		pub.year=9999; //put pre-prints at the beginning
-        	} else if (yearString.contentEquals("in press")) {
+        	} else if (yearString.equals("in press")) {
         		pub.year=9998; //put in press articles next
         	} else {
         		pub.year=Integer.parseInt(yearString);
         	}
-
+        	
         	pub.citation = item.get("citation").toString().replaceAll("\"", "");
         	pub.topic = item.get("topic").toString().replaceAll("\"", "");
         	pub.method = item.get("method").toString().replaceAll("\"", "");
@@ -86,7 +86,7 @@ public class GeneratePublicationList {
         	//add to publications list
         	GenerateOutput.allPublications.add(pub);	
         }
-        
+
         //set the booleans for the publications
         for (int i = 0; i < publicationArray.size(); i++) {
         	GenerateOutput.allPublications.get(i).setBooleans();
@@ -101,7 +101,9 @@ public class GeneratePublicationList {
         //set up the sort-by listbox
         final VerticalPanel sortByPanel = new VerticalPanel();
         final Label sortByPanelLabel = new Label("Sort by:");
+        sortByPanelLabel.addStyleName("listBoxHeader");
         final ListBox sortBySelectionMenu = new ListBox();
+        sortBySelectionMenu.addStyleName("listBoxStyle");
         
         sortBySelectionMenu.addItem("Year");
         sortBySelectionMenu.addItem("Topic");
@@ -113,7 +115,9 @@ public class GeneratePublicationList {
         //set up the selection menus: 1. topics
         final VerticalPanel topicSelectionPanel = new VerticalPanel();
         final Label topicSelectionLabel = new Label("Filter by topic:");
+        topicSelectionLabel.addStyleName("listBoxHeader");
         final ListBox topicSelectionMenu = new ListBox();
+        topicSelectionMenu.addStyleName("listBoxStyle");
 
         for (int i = 0; i <= Publication.maxTopic; i++) {
         	topicSelectionMenu.addItem(Publication.topicString.get(Publication.topicPosition.indexOf(i)));
@@ -126,7 +130,9 @@ public class GeneratePublicationList {
         
         final VerticalPanel methodSelectionPanel = new VerticalPanel();
         final Label methodSelectionLabel = new Label("Filter by method:");
+        methodSelectionLabel.addStyleName("listBoxHeader");
         final ListBox methodSelectionMenu = new ListBox();
+        methodSelectionMenu.addStyleName("listBoxStyle");
 
         for (int i = 0; i <= Publication.maxMethod; i++) {
         	methodSelectionMenu.addItem(Publication.methodString.get(Publication.methodPosition.indexOf(i)));
@@ -136,56 +142,66 @@ public class GeneratePublicationList {
         methodSelectionPanel.add(methodSelectionMenu);
         
         //put panels on screen     
-        RootPanel.get().add(sortByPanel);
-        RootPanel.get().add(topicSelectionPanel);
-        RootPanel.get().add(methodSelectionPanel);
-        RootPanel.get().add(Publication.publicationList);
-        
+        RootPanel.get("gwtContainer").add(sortByPanel);
+        RootPanel.get("gwtContainer").add(topicSelectionPanel);
+        RootPanel.get("gwtContainer").add(methodSelectionPanel);
+        RootPanel.get("gwtContainer").add(Publication.publicationList);
+
         //setup handler for sort-by panel
         sortBySelectionMenu.addChangeHandler(new ChangeHandler() {
         	public void onChange(ChangeEvent event) {
         		Publication.sortBy = sortBySelectionMenu.getSelectedIndex();
+        		
+        		PHP.Call("pageLoad.php?id=sort by " + sortBySelectionMenu.getSelectedIndex(), false);
         		
         		//sort the publications by the new sorter
         		Collections.sort(GenerateOutput.allPublications);
         		
         		Publication.publicationList = GenerateOutput.Run();
         		
-        		RootPanel.get().clear();
-        		RootPanel.get().add(sortByPanel);
-        		RootPanel.get().add(topicSelectionPanel);
-                RootPanel.get().add(methodSelectionPanel);
-                RootPanel.get().add(Publication.publicationList);
+        		RootPanel.get("gwtContainer").clear();
+        		RootPanel.get("gwtContainer").add(sortByPanel);
+        		RootPanel.get("gwtContainer").add(topicSelectionPanel);
+                RootPanel.get("gwtContainer").add(methodSelectionPanel);
+                RootPanel.get("gwtContainer").add(Publication.publicationList);
         	}
         });
         
         //setup handlers for listboxes
         topicSelectionMenu.addChangeHandler(new ChangeHandler() {
         	public void onChange(ChangeEvent event) {
-        		Publication.selectedTopic = topicSelectionMenu.getSelectedIndex();
+        		int selection = topicSelectionMenu.getSelectedIndex();
+        		
+        		Publication.selectedTopic = Publication.topicPosition.indexOf(selection);
+        		
+        		PHP.Call("pageLoad.php?id=select topic: " + Publication.topicString.get(Publication.selectedTopic), false);
         		
         		Publication.publicationList = GenerateOutput.Run();
         		
-        		RootPanel.get().clear();
-        		RootPanel.get().add(sortByPanel);
-        		RootPanel.get().add(topicSelectionPanel);
-                RootPanel.get().add(methodSelectionPanel);
-                RootPanel.get().add(Publication.publicationList);
+        		RootPanel.get("gwtContainer").clear();
+        		RootPanel.get("gwtContainer").add(sortByPanel);
+        		RootPanel.get("gwtContainer").add(topicSelectionPanel);
+                RootPanel.get("gwtContainer").add(methodSelectionPanel);
+                RootPanel.get("gwtContainer").add(Publication.publicationList);
         		
         	}
         });
 
         methodSelectionMenu.addChangeHandler(new ChangeHandler() {
         	public void onChange(ChangeEvent event) {
-        		Publication.selectedMethod = methodSelectionMenu.getSelectedIndex();
+        		int selection = methodSelectionMenu.getSelectedIndex();
+        		
+        		Publication.selectedMethod = Publication.methodPosition.indexOf(selection);
+        		
+        		PHP.Call("pageLoad.php?id=select method: " + Publication.methodString.get(Publication.selectedMethod), false);
         		
         		Publication.publicationList = GenerateOutput.Run();
         		
-        		RootPanel.get().clear();
-        		RootPanel.get().add(sortByPanel);
-        		RootPanel.get().add(topicSelectionPanel);
-                RootPanel.get().add(methodSelectionPanel);
-                RootPanel.get().add(Publication.publicationList);
+        		RootPanel.get("gwtContainer").clear();
+        		RootPanel.get("gwtContainer").add(sortByPanel);
+        		RootPanel.get("gwtContainer").add(topicSelectionPanel);
+                RootPanel.get("gwtContainer").add(methodSelectionPanel);
+                RootPanel.get("gwtContainer").add(Publication.publicationList);
         		
         	}
         });

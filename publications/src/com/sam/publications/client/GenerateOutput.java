@@ -4,8 +4,11 @@ import java.util.ArrayList;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -37,26 +40,38 @@ public class GenerateOutput {
         	}
         }
 		
-		//setup a panel for each publication
+		//setup a panel for each publication, this contains the info panel (including
+		//the two buttons), then below it the abstract
         final VerticalPanel[] publicationPanel = new VerticalPanel[publicationOutput.size()];
         
         for (int i = 0; i < publicationOutput.size(); i++) {
         	publicationPanel[i] = new VerticalPanel();
 	
-        	final HorizontalPanel citationPanel = new HorizontalPanel();
+        	final HorizontalPanel infoPanel = new HorizontalPanel();
         	
         	final HTML citation = new HTML(publicationOutput.get(i).citation);
         	final Button pdfButton = new Button("pdf");
-        	final Button abstrButton = new Button("show abstract");   	
+        	final Button abstrButton = new Button("show abstract");   
+        	final HorizontalPanel buttonWrapper = new HorizontalPanel();
+
+        	publicationPanel[i].setWidth("100%");
+        	infoPanel.setWidth("100%");
         	
-        	citationPanel.add(citation);
+        	infoPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        	infoPanel.add(citation);
         	
-        	if (publicationOutput.get(i).pdf.length() > 0) {
-        		citationPanel.add(pdfButton);
+        	infoPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+        	buttonWrapper.add(pdfButton);
+        	buttonWrapper.add(abstrButton);
+        	
+        	infoPanel.add(buttonWrapper);
+
+        	if (publicationOutput.get(i).pdf.equals("null")) {
+        		pdfButton.setEnabled(false);
         	}
         	
-        	if (publicationOutput.get(i).abstr.length() > 0) {
-        		citationPanel.add(abstrButton);
+        	if (publicationOutput.get(i).abstr.equals("null")) {
+        		abstrButton.setEnabled(false);
         	}
         	
         	//add CSS styles
@@ -64,25 +79,35 @@ public class GenerateOutput {
         	pdfButton.setStyleName("pdfButton");
         	abstrButton.setStyleName("abstButton");
         	
-        	//add citation panel
-        	publicationPanel[i].add(citationPanel);
+        	//add info panel
+        	publicationPanel[i].add(infoPanel);
         	
-        	//set up abstract panel and add CSS style
-        	final Label abstr = new Label("");
+        	//set up abstract panel, add it to the publication panel
+        	//(below info panel) and add CSS style
+        	final HTML abstr = new HTML("");
         	publicationPanel[i].add(abstr);
         	
-        	abstr.setStyleName("abstr");	
+        	abstr.setStyleName("abst");	
         	
         	final int finali = i;
+        	
+        	//set up pdf button
+        	pdfButton.addClickHandler(new ClickHandler() {
+        		public void onClick(ClickEvent event) {
+        			PHP.Call("pageLoad.php?id=getPub: " + publicationOutput.get(finali).pdf, true);
+        			
+        			Window.open("getPub.php?id="+publicationOutput.get(finali).pdf,"publication","");
+        		}
+        	});
         	
         	//set up abstract button
         	abstrButton.addClickHandler(new ClickHandler() {
         		public void onClick(ClickEvent event) {
         			if (abstrButton.getText().equals("show abstract")) {
-        				abstr.setText(publicationOutput.get(finali).abstr);
+        				abstr.setHTML(publicationOutput.get(finali).abstr);
         				abstrButton.setText("hide abstract");
         			} else {
-        				abstr.setText("");
+        				abstr.setHTML("");
         				abstrButton.setText("show abstract");
         			}
         		}
@@ -99,7 +124,13 @@ public class GenerateOutput {
         	String header = "";
         	
         	if (Publication.sortBy == Publication.sortByYear) {
-        		header = header + publicationOutput.get(i).year;
+        		if (publicationOutput.get(i).year==9999) {
+        			header="pre-print";
+        		} else if (publicationOutput.get(i).year==9998) {
+        			header="in press";
+        		} else {
+        			header = header + publicationOutput.get(i).year;
+        		}
         	}
         	
         	if (Publication.sortBy == Publication.sortByTopic) {

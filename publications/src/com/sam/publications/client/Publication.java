@@ -2,8 +2,10 @@ package com.sam.publications.client;
 
 import java.util.ArrayList;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class Publication implements java.lang.Comparable<Publication> {
 	//static variables
@@ -23,7 +25,7 @@ public class Publication implements java.lang.Comparable<Publication> {
 	
 	//use this to contain the list of publications
 	static VerticalPanel publicationList = new VerticalPanel();
-	
+
 	//information about each individual publication
 	int year;
 	String citation, topic, method, pdf, abstr; 
